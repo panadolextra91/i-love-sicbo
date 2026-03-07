@@ -96,4 +96,4 @@ Hệ thống điều khiển theo phong cách "Hacker" bằng phím tắt:
 
 ---
 
-Chúc mẹ và anh em đồng đạo có những giây phút giải trí cực hồng và cực vui tại **I LOVE SIC BO**! 🐹💖🌸
+Chúc anh em đánh tài ra tài, đánh xỉu ra xỉu, 8386 và có những giây phút giải trí cực hồng cực vui tại **I LOVE SIC BO**! 🐹💖🌸
