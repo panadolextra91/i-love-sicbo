@@ -1,5 +1,5 @@
 # 🌸 I LOVE SIC BO 🌸
-(Sòng Bài Tàii Xỉuuu Mẹ Yêuuu - ĐÁNH TÀI RA TÀI, ĐÁNH XỈU RA XỈU)
+(Sòng Bài Tài Xỉu - ĐÁNH TÀI RA TÀI, ĐÁNH XỈU RA XỈU)
 
 ```text
   ___   _       ___ __     __ _____   ____ ___  ____     ____   ___  
