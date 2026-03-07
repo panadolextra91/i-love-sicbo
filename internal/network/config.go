@@ -11,6 +11,7 @@ type Config struct {
 	AppPingInterval  time.Duration
 	HeartbeatTimeout time.Duration
 	LatencyBuffer    time.Duration
+	SlowClientGrace  time.Duration
 }
 
 func DefaultConfig() Config {
@@ -23,5 +24,6 @@ func DefaultConfig() Config {
 		AppPingInterval:  5 * time.Second,
 		HeartbeatTimeout: 10 * time.Second,
 		LatencyBuffer:    500 * time.Millisecond,
+		SlowClientGrace:  3 * time.Second,
 	}
 }

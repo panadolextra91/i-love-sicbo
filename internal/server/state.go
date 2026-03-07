@@ -14,6 +14,10 @@ type RoundState struct {
 	Open        bool
 }
 
+func NewRoundState() *RoundState {
+	return &RoundState{}
+}
+
 func (s *RoundState) Start(roundID string, hardCloseAt time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

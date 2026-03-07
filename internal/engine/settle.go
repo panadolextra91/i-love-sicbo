@@ -4,7 +4,7 @@ import "sync"
 
 var settleMu sync.Mutex
 
-func SettleRoundAtomic(roundID string, bets []Bet, roller DiceRoller, reg *StrategyRegistry, wallet WalletStore, roundRepo RoundRepo) (RoundSettlement, error) {
+func SettleRoundAtomic(roundID string, roundNo int64, startedAt, settledAt int64, bets []Bet, roller DiceRoller, reg *StrategyRegistry, store SettlementStore) (RoundSettlement, error) {
 	settleMu.Lock()
 	defer settleMu.Unlock()
 
@@ -18,11 +18,7 @@ func SettleRoundAtomic(roundID string, bets []Bet, roller DiceRoller, reg *Strat
 		playerGross[b.PlayerID] += gross
 	}
 
-	if err := wallet.ApplyGrossBatch(playerGross); err != nil {
-		return RoundSettlement{}, err
-	}
-
-	if err := roundRepo.MarkSettled(roundID, dice, results); err != nil {
+	if err := store.SettleRound(roundID, roundNo, startedAt, settledAt, dice, results); err != nil {
 		return RoundSettlement{}, err
 	}
 

@@ -7,10 +7,11 @@ import (
 
 	"cachon-casino/internal/engine"
 	"cachon-casino/internal/network"
+	"cachon-casino/internal/repo"
 )
 
 func RunRoundLoop(ctx context.Context, deps Deps, betWindowSec int) {
-	roundNo := 1
+	roundNo := int64(1)
 	for {
 		select {
 		case <-ctx.Done():
@@ -18,9 +19,16 @@ func RunRoundLoop(ctx context.Context, deps Deps, betWindowSec int) {
 		default:
 		}
 
+		if err := deps.SettleStore.AuditChipLedger(ctx); err != nil {
+			alert, _ := network.NewEnvelope(network.MsgActivityLog, deps.SessionID, deps.Seq.Next(), network.ActivityPayload{Message: "[ALERT] Ledger audit mismatch, betting is paused"})
+			deps.Hub.Broadcast <- alert
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
 		roundID := fmt.Sprintf("r-%d", roundNo)
-		now := time.Now()
-		hard := now.Add(time.Duration(betWindowSec) * time.Second).Add(deps.Config.LatencyBuffer)
+		startedAt := time.Now()
+		hard := startedAt.Add(time.Duration(betWindowSec) * time.Second).Add(deps.Config.LatencyBuffer)
 		deps.State.Start(roundID, hard)
 
 		for sec := betWindowSec; sec >= 0; sec-- {
@@ -33,7 +41,8 @@ func RunRoundLoop(ctx context.Context, deps Deps, betWindowSec int) {
 		deps.State.Close(roundID)
 
 		bets := deps.BetBuffer.Drain(roundID)
-		settlement, err := engine.SettleRoundAtomic(roundID, bets, deps.Roller, deps.Registry, deps.Wallet, deps.RoundRepo)
+		settledAt := time.Now()
+		settlement, err := engine.SettleRoundAtomic(roundID, roundNo, startedAt.UnixMilli(), settledAt.UnixMilli(), bets, deps.Roller, deps.Registry, settleStoreAdapter{repo: deps.SettleStore})
 		if err == nil {
 			payload := network.RoundResultPayload{RoundID: settlement.RoundID, Dice: settlement.Dice, Settlements: settlement.Details}
 			res, _ := network.NewEnvelope(network.MsgRoundResult, deps.SessionID, deps.Seq.Next(), payload)
@@ -47,4 +56,12 @@ func RunRoundLoop(ctx context.Context, deps Deps, betWindowSec int) {
 
 		roundNo++
 	}
+}
+
+type settleStoreAdapter struct {
+	repo *repo.Repository
+}
+
+func (s settleStoreAdapter) SettleRound(roundID string, roundNo int64, startedAt, settledAt int64, dice engine.DiceResult, results []engine.PayoutResult) error {
+	return s.repo.SettleRound(context.Background(), roundID, roundNo, time.UnixMilli(startedAt), time.UnixMilli(settledAt), dice, results)
 }

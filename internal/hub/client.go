@@ -9,12 +9,15 @@ import (
 )
 
 type Client struct {
-	ID    string
-	Conn  *websocket.Conn
-	Send  chan network.Envelope
-	mu    sync.RWMutex
-	pong  time.Time
-	slow  time.Time
+	ID          string
+	PlayerID    string
+	DisplayName string
+	Fingerprint string
+	Conn        *websocket.Conn
+	Send        chan network.Envelope
+	mu          sync.RWMutex
+	pong        time.Time
+	slow        time.Time
 }
 
 func NewClient(id string, conn *websocket.Conn, buffer int) *Client {

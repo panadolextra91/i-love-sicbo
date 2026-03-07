@@ -36,7 +36,7 @@ type roundRepoMock struct {
 	err    error
 }
 
-func (r *roundRepoMock) MarkSettled(_ string, _ engine.DiceResult, _ []engine.PayoutResult) error {
+func (r *roundRepoMock) SettleRound(roundID string, roundNo int64, startedAt, settledAt int64, dice engine.DiceResult, results []engine.PayoutResult) error {
 	if r.err != nil {
 		return r.err
 	}

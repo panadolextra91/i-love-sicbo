@@ -37,12 +37,8 @@ type RoundSettlement struct {
 	Details     []PayoutResult
 }
 
-type WalletStore interface {
-	ApplyGrossBatch(playerGross map[string]int64) error
-}
-
-type RoundRepo interface {
-	MarkSettled(roundID string, dice DiceResult, results []PayoutResult) error
+type SettlementStore interface {
+	SettleRound(roundID string, roundNo int64, startedAt, settledAt int64, dice DiceResult, results []PayoutResult) error
 }
 
 type BetStore interface {

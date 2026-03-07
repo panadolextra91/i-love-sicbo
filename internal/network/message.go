@@ -51,6 +51,19 @@ type CountdownPayload struct {
 	BettingOpen bool   `json:"betting_open"`
 }
 
+type JoinRoomPayload struct {
+	Name        string `json:"name"`
+	Fingerprint string `json:"fingerprint"`
+}
+
+type JoinAckPayload struct {
+	PlayerID string `json:"player_id"`
+	Name     string `json:"name"`
+	Chips    int64  `json:"chips"`
+	Bonus    int64  `json:"bonus"`
+	RoundID  string `json:"round_id,omitempty"`
+}
+
 type PlaceBetPayload struct {
 	RoundID     string `json:"round_id"`
 	BetType     string `json:"bet_type"`
@@ -59,11 +72,11 @@ type PlaceBetPayload struct {
 }
 
 type RoundResultPayload struct {
-	RoundID      string      `json:"round_id"`
-	Dice         [3]int      `json:"dice"`
-	Settlements  interface{} `json:"settlements"`
-	Leaderboard  interface{} `json:"leaderboard,omitempty"`
-	TopActivities []string   `json:"top_activities,omitempty"`
+	RoundID       string      `json:"round_id"`
+	Dice          [3]int      `json:"dice"`
+	Settlements   interface{} `json:"settlements"`
+	Leaderboard   interface{} `json:"leaderboard,omitempty"`
+	TopActivities []string    `json:"top_activities,omitempty"`
 }
 
 type ShutdownPayload struct {

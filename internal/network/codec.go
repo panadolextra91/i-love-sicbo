@@ -15,3 +15,7 @@ func DecodePayload[T any](env Envelope) (T, error) {
 	err := json.Unmarshal(env.Payload, &out)
 	return out, err
 }
+
+func DecodePayloadTo(env Envelope, v any) error {
+	return json.Unmarshal(env.Payload, v)
+}
