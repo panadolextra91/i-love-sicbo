@@ -1,4 +1,5 @@
 # 🌸 I LOVE SIC BO 🌸
+> **Languages:** [Tiếng Việt] | [English Version](README-eng.md)
 (Sòng Bài Tài Xỉu - ĐÁNH TÀI RA TÀI, ĐÁNH XỈU RA XỈU)
 
 ```text
