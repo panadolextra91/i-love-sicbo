@@ -66,6 +66,7 @@ func main() {
 		PlayerRepo:   repository,
 		State:        server.NewRoundState(),
 		BetBuffer:    server.NewBetBuffer(),
+		Barrier:      server.NewReadyBarrier(),
 		SessionID:    sessionID,
 		Seq:          seq,
 		Hub:          h,

@@ -17,6 +17,7 @@ type Deps struct {
 	PlayerRepo   *repo.Repository
 	State        *RoundState
 	BetBuffer    *BetBuffer
+	Barrier      *ReadyBarrier
 	SessionID    string
 	Seq          *network.Sequence
 	Hub          *hub.Hub
@@ -107,6 +108,14 @@ func RegisterHandlers(d *hub.Dispatcher, deps Deps) {
 		case c.Send <- ack:
 		default:
 		}
+	})
+
+	d.Register(network.MsgRoundReady, func(_ context.Context, c *hub.Client, env network.Envelope) {
+		payload, err := network.DecodePayload[network.RoundReadyPayload](env)
+		if err != nil {
+			return
+		}
+		deps.Barrier.Mark(payload.RoundID, c.PlayerID)
 	})
 }
 

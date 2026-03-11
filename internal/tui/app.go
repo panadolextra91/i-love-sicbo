@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"cachon-casino/internal/engine"
@@ -35,9 +36,10 @@ type Model struct {
 	BetStake        int64
 	TargetValue     int
 
-	Dice        [3]int
-	History     []string // 🌸 (Tài) / 🍀 (Xỉu)
-	LastResults []engine.PayoutResult
+	Dice            [3]int
+	History         []string // 🌸 (Tài) / 🍀 (Xỉu)
+	LastResults     []engine.PayoutResult
+	LastOutcomeText string
 
 	Logs []string
 	Err  error
@@ -107,6 +109,10 @@ func (m Model) handleEnvelope(env network.Envelope) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd = m.waitForMsg()
 
 	switch env.Type {
+	case network.MsgPing:
+		pong, _ := network.NewEnvelope(network.MsgPong, m.SessionID, 0, map[string]string{"ok": "1"})
+		m.Outbound <- pong
+
 	case network.MsgJoinAck:
 		var p network.JoinAckPayload
 		_ = network.DecodePayloadTo(env, &p)
@@ -127,6 +133,43 @@ func (m Model) handleEnvelope(env network.Envelope) (tea.Model, tea.Cmd) {
 		var p network.RoundResultPayload
 		_ = network.DecodePayloadTo(env, &p)
 		m.Dice = p.Dice
+		sum := m.Dice[0] + m.Dice[1] + m.Dice[2]
+		if sum >= 11 {
+			m.LastOutcomeText = "Kết quả: Tài"
+		} else {
+			m.LastOutcomeText = "Kết quả: Xỉu"
+		}
+		type betJSON struct {
+			PlayerID    string `json:"PlayerID"`
+			Type        string `json:"Type"`
+			Stake       int64  `json:"Stake"`
+			TargetValue int    `json:"TargetValue"`
+		}
+		type payoutJSON struct {
+			Bet         betJSON `json:"Bet"`
+			Win         bool    `json:"Win"`
+			GrossPayout int64   `json:"GrossPayout"`
+		}
+		var tmp struct {
+			RoundID     string       `json:"round_id"`
+			Dice        [3]int       `json:"dice"`
+			Settlements []payoutJSON `json:"settlements"`
+		}
+		_ = network.DecodePayloadTo(env, &tmp)
+		if len(tmp.Settlements) > 0 {
+			var net int64
+			for _, pr := range tmp.Settlements {
+				if pr.Bet.PlayerID == m.PlayerID {
+					net += pr.GrossPayout - pr.Bet.Stake
+				}
+			}
+			if net > 0 {
+				m.LastOutcomeText = fmt.Sprintf("%s | Bạn thắng: +%d", m.LastOutcomeText, net)
+			} else if net < 0 {
+				m.LastOutcomeText = fmt.Sprintf("%s | Bạn thua: %d", m.LastOutcomeText, net)
+			}
+			m.Chips += net
+		}
 		m.State = StateRolling
 		// Start rolling animation
 		cmd = tea.Batch(
@@ -137,6 +180,16 @@ func (m Model) handleEnvelope(env network.Envelope) (tea.Model, tea.Cmd) {
 				return ResetRollingMsg{}
 			},
 		)
+
+	case network.MsgRoundPrepare:
+		var p network.RoundPreparePayload
+		_ = network.DecodePayloadTo(env, &p)
+		m.RoundID = p.RoundID
+		m.SelectedBetType = ""
+		m.BetStake = 0
+		m.TargetValue = 0
+		m.LastOutcomeText = ""
+		m.State = StateBetting
 
 	case network.MsgBetAccepted:
 		// Optional: Flash something green

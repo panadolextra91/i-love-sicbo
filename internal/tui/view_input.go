@@ -38,6 +38,9 @@ func (m *Model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.TargetValue > 17 {
 			m.TargetValue = 1
 		}
+	case "f":
+		ready, _ := network.NewEnvelope(network.MsgRoundReady, m.SessionID, 0, network.RoundReadyPayload{RoundID: m.RoundID})
+		m.Outbound <- ready
 	case "+":
 		m.BetStake += 100
 	case "-":

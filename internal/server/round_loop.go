@@ -27,9 +27,15 @@ func RunRoundLoop(ctx context.Context, deps Deps, betWindowSec int) {
 		}
 
 		roundID := fmt.Sprintf("r-%d", roundNo)
+		if len(deps.SessionID) > 0 {
+			roundID = fmt.Sprintf("sess-%s-%d", deps.SessionID, roundNo)
+		}
 		startedAt := time.Now()
 		hard := startedAt.Add(time.Duration(betWindowSec) * time.Second).Add(deps.Config.LatencyBuffer)
 		deps.State.Start(roundID, hard)
+
+		prepare, _ := network.NewEnvelope(network.MsgRoundPrepare, deps.SessionID, deps.Seq.Next(), network.RoundPreparePayload{RoundID: roundID})
+		deps.Hub.Broadcast <- prepare
 
 		for sec := betWindowSec; sec >= 0; sec-- {
 			env, _ := network.NewEnvelope(network.MsgCountdownTick, deps.SessionID, deps.Seq.Next(), network.CountdownPayload{RoundID: roundID, SecondsLeft: sec, BettingOpen: sec > 0})
@@ -52,6 +58,24 @@ func RunRoundLoop(ctx context.Context, deps Deps, betWindowSec int) {
 				act, _ := network.NewEnvelope(network.MsgActivityLog, deps.SessionID, deps.Seq.Next(), network.ActivityPayload{Message: line})
 				deps.Hub.Broadcast <- act
 			}
+		}
+
+		deps.Barrier.Reset(roundID)
+		prompt, _ := network.NewEnvelope(network.MsgActivityLog, deps.SessionID, deps.Seq.Next(), network.ActivityPayload{Message: "Nhấn F để tiếp tục vòng mới"})
+		deps.Hub.Broadcast <- prompt
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			players := deps.Hub.SnapshotPlayerIDs()
+			if len(players) == 0 || deps.Barrier.ReadyCount() < len(players) {
+				time.Sleep(200 * time.Millisecond)
+				continue
+			}
+			break
 		}
 
 		roundNo++

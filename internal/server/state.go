@@ -62,3 +62,34 @@ func (b *BetBuffer) Drain(roundID string) []engine.Bet {
 	delete(b.bets, roundID)
 	return out
 }
+
+type ReadyBarrier struct {
+	mu      sync.Mutex
+	roundID string
+	ready   map[string]struct{}
+}
+
+func NewReadyBarrier() *ReadyBarrier {
+	return &ReadyBarrier{ready: map[string]struct{}{}}
+}
+
+func (b *ReadyBarrier) Reset(roundID string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.roundID = roundID
+	b.ready = map[string]struct{}{}
+}
+
+func (b *ReadyBarrier) Mark(roundID, playerID string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.roundID == roundID && playerID != "" {
+		b.ready[playerID] = struct{}{}
+	}
+}
+
+func (b *ReadyBarrier) ReadyCount() int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return len(b.ready)
+}

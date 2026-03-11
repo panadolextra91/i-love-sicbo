@@ -18,6 +18,8 @@ const (
 	MsgBetRejected         MessageType = "BET_REJECTED"
 	MsgCountdownTick       MessageType = "COUNTDOWN_TICK"
 	MsgRoundResult         MessageType = "ROUND_RESULT"
+	MsgRoundPrepare        MessageType = "ROUND_PREPARE"
+	MsgRoundReady          MessageType = "ROUND_READY"
 	MsgLeaderboardSnapshot MessageType = "LEADERBOARD_SNAPSHOT"
 	MsgActivityLog         MessageType = "ACTIVITY_LOG"
 	MsgServerShutdown      MessageType = "SERVER_SHUTDOWN"
@@ -77,6 +79,14 @@ type RoundResultPayload struct {
 	Settlements   interface{} `json:"settlements"`
 	Leaderboard   interface{} `json:"leaderboard,omitempty"`
 	TopActivities []string    `json:"top_activities,omitempty"`
+}
+
+type RoundPreparePayload struct {
+	RoundID string `json:"round_id"`
+}
+
+type RoundReadyPayload struct {
+	RoundID string `json:"round_id"`
 }
 
 type ShutdownPayload struct {

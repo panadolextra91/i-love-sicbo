@@ -75,6 +75,16 @@ func (h *Hub) broadcast(msg network.Envelope) {
 	}
 }
 
+func (h *Hub) SnapshotPlayerIDs() []string {
+	out := []string{}
+	for c := range h.clients {
+		if c.PlayerID != "" {
+			out = append(out, c.PlayerID)
+		}
+	}
+	return out
+}
+
 func enqueueOrPolicy(c *Client, msg network.Envelope, now time.Time, grace time.Duration) bool {
 	if tryEnqueue(c, msg) {
 		c.SetSlowSince(time.Time{})

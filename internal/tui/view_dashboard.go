@@ -33,6 +33,13 @@ func (m Model) renderDashboard() string {
 	middle := lipgloss.JoinVertical(lipgloss.Center,
 		m.renderDice(),
 		lipgloss.NewStyle().PaddingTop(1).Render(historyStr),
+		lipgloss.NewStyle().PaddingTop(1).Render(m.LastOutcomeText),
+		func() string {
+			if m.State == StateSettled {
+				return lipgloss.NewStyle().PaddingTop(1).Render("Nhấn F để tiếp tục vòng mới")
+			}
+			return ""
+		}(),
 	)
 
 	// 4. Betting Section

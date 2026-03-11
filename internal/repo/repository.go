@@ -97,7 +97,7 @@ func (r *Repository) SettleRound(ctx context.Context, roundID string, roundNo in
 		return mapSQLError(err)
 	}
 
-	for _, pr := range results {
+		for _, pr := range results {
 		betID := uuid.NewString()
 		if _, err := tx.ExecContext(ctx, `INSERT INTO bets(id,round_id,player_id,bet_type,amount,payout,is_win,created_at) VALUES(?,?,?,?,?,?,?,?)`, betID, roundID, pr.Bet.PlayerID, string(pr.Bet.Type), pr.Bet.Stake, pr.GrossPayout, pr.Win, settledAt); err != nil {
 			if isUniqueErr(err) {
@@ -105,17 +105,18 @@ func (r *Repository) SettleRound(ctx context.Context, roundID string, roundNo in
 			}
 			return mapSQLError(err)
 		}
-		reason := "ROUND_PAYOUT"
-		if pr.GrossPayout <= 0 {
-			reason = "BET_DEBIT"
-		}
-		if _, err := tx.ExecContext(ctx, `INSERT INTO chip_transactions(id,player_id,amount,reason,round_id,created_at) VALUES(?,?,?,?,?,?)`, uuid.NewString(), pr.Bet.PlayerID, pr.GrossPayout, reason, roundID, settledAt); err != nil {
+			netChange := pr.GrossPayout - pr.Bet.Stake
+			reason := "ROUND_PAYOUT"
+			if netChange < 0 {
+				reason = "BET_DEBIT"
+			}
+			if _, err := tx.ExecContext(ctx, `INSERT INTO chip_transactions(id,player_id,amount,reason,round_id,created_at) VALUES(?,?,?,?,?,?)`, uuid.NewString(), pr.Bet.PlayerID, netChange, reason, roundID, settledAt); err != nil {
 			if isUniqueErr(err) {
 				return ErrRoundAlreadySettled
 			}
 			return mapSQLError(err)
 		}
-		if _, err := tx.ExecContext(ctx, `UPDATE players SET chips = chips + ?, updated_at = ? WHERE id = ?`, pr.GrossPayout, settledAt, pr.Bet.PlayerID); err != nil {
+			if _, err := tx.ExecContext(ctx, `UPDATE players SET chips = chips + ?, updated_at = ? WHERE id = ?`, netChange, settledAt, pr.Bet.PlayerID); err != nil {
 			return mapSQLError(err)
 		}
 	}
